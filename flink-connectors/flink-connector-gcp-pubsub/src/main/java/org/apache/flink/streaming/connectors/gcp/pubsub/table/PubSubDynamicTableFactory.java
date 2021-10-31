@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.flink.streaming.connectors.gcp.pubsub.table;
 
 import org.apache.flink.annotation.Internal;
@@ -30,6 +48,7 @@ public class PubSubDynamicTableFactory implements DynamicTableSourceFactory {
         final Set<ConfigOption<?>> options = new HashSet<>();
         options.add(PubSubConnectorOptions.PROJECT_NAME);
         options.add(PubSubConnectorOptions.SUBSCRIPTION);
+        options.add(PubSubConnectorOptions.CHECKPOINT_DISABLED);
         options.add(FactoryUtil.FORMAT);
         return options;
     }
@@ -54,10 +73,12 @@ public class PubSubDynamicTableFactory implements DynamicTableSourceFactory {
         final ReadableConfig options = helper.getOptions();
         final String project = options.get(PubSubConnectorOptions.PROJECT_NAME);
         final String subscription = options.get(PubSubConnectorOptions.SUBSCRIPTION);
+        final boolean checkpointDisabled = options.get(PubSubConnectorOptions.CHECKPOINT_DISABLED);
 
         final DataType producedDataType =
                 context.getCatalogTable().getResolvedSchema().toPhysicalRowDataType();
 
-        return new PubsubDynamicSource(project, subscription, decodingFormat, producedDataType);
+        return new PubsubDynamicSource(
+                project, subscription, decodingFormat, producedDataType, checkpointDisabled);
     }
 }

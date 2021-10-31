@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.apache.flink.streaming.connectors.gcp.pubsub.table;
 
 import org.apache.flink.annotation.Internal;
@@ -31,16 +49,20 @@ public class PubsubDynamicSource implements ScanTableSource {
     /** Data type that describes the final output of the source. */
     private final DataType producedDataType;
 
+    private boolean checkpointDisabled;
+
     public PubsubDynamicSource(
             String project,
             String subscription,
             DecodingFormat<DeserializationSchema<RowData>> decodingFormat,
-            DataType producedDataType) {
+            DataType producedDataType,
+            boolean checkpointDisabled) {
 
         this.project = project;
         this.subscription = subscription;
         this.decodingFormat = decodingFormat;
         this.producedDataType = producedDataType;
+        this.checkpointDisabled = checkpointDisabled;
     }
 
     @Override
@@ -59,6 +81,7 @@ public class PubsubDynamicSource implements ScanTableSource {
                             .withDeserializationSchema(deserializer)
                             .withProjectName(project)
                             .withSubscriptionName(subscription)
+                            .disableCheckpoint(checkpointDisabled)
                             .build();
             return SourceFunctionProvider.of(source, false);
         } catch (IOException e) {
@@ -68,7 +91,8 @@ public class PubsubDynamicSource implements ScanTableSource {
 
     @Override
     public DynamicTableSource copy() {
-        return new PubsubDynamicSource(project, subscription, decodingFormat, producedDataType);
+        return new PubsubDynamicSource(
+                project, subscription, decodingFormat, producedDataType, checkpointDisabled);
     }
 
     @Override
